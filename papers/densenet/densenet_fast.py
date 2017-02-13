@@ -26,6 +26,8 @@ try:
 except ImportError:
     from lasagne.layers import BatchNormLayer
 
+import theano.tensor as T
+
 def basinabs(x):
     return T.maximum(0, abs(x)-0.1)
 
