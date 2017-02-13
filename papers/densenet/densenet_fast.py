@@ -26,6 +26,21 @@ try:
 except ImportError:
     from lasagne.layers import BatchNormLayer
 
+def basinabs(x):
+    return T.maximum(0, abs(x)-0.1)
+
+def signmat(x):
+    return (x > 0) * 2 - 1
+
+def shrinkage(x):
+    return basinabs(x) * signmat(x)
+
+ournonlin = rectify
+#ournonlin = abs
+#ournonlin = basinabs
+#ournonlin = shrinkage
+
+
 
 def build_densenet(input_shape=(None, 3, 32, 32), input_var=None, classes=10,
                    depth=40, first_output=16, growth_rate=12, num_blocks=3,
@@ -95,7 +110,7 @@ def build_densenet(input_shape=(None, 3, 32, 32), input_var=None, classes=10,
     # post processing until prediction
     network = ScaleLayer(network, name='post_scale')
     network = BiasLayer(network, name='post_shift')
-    network = NonlinearityLayer(network, nonlinearity=rectify,
+    network = NonlinearityLayer(network, nonlinearity=ournonlin,
                                 name='post_relu')
     network = GlobalPoolLayer(network, name='post_pool')
     network = DenseLayer(network, classes, nonlinearity=softmax,
@@ -131,7 +146,7 @@ def transition(network, dropout, name_prefix):
 def affine_relu_conv(network, channels, filter_size, dropout, name_prefix):
     network = ScaleLayer(network, name=name_prefix + '_scale')
     network = BiasLayer(network, name=name_prefix + '_shift')
-    network = NonlinearityLayer(network, nonlinearity=rectify,
+    network = NonlinearityLayer(network, nonlinearity=ournonlin,
                                 name=name_prefix + '_relu')
     network = Conv2DLayer(network, channels, filter_size, pad='same',
                           W=lasagne.init.HeNormal(gain='relu'),
