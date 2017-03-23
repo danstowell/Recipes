@@ -83,7 +83,7 @@ def generate_in_background(generator, num_cached=10):
 
 
 def train_test(depth, growth_rate, dropout, augment, validate, epochs,
-               eta, save_weights, save_errors, batchsize=64):
+               eta, save_weights, save_errors, batchsize=16):
     # import (deferred until now to make --help faster)
     import numpy as np
     import theano
