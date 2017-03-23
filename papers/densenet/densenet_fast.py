@@ -44,7 +44,7 @@ ournonlin = rectify
 
 
 
-def build_densenet(input_shape=(None, 3, 32, 32), input_var=None, classes=10,
+def build_densenet(input_shape=(None, 3, None, None), input_var=None, classes=10,
                    depth=40, first_output=16, growth_rate=12, num_blocks=3,
                    dropout=0):
     """

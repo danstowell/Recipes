@@ -9,7 +9,7 @@ For usage information, call with --help.
 Author: Jan Schlüter
 """
 
-import os
+import os, sys
 from argparse import ArgumentParser
 
 
@@ -91,8 +91,16 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
     import lasagne
 
     import densenet_fast as densenet  # or "import densenet" for slower version
-    import cifar10
     import progress
+
+    if False:
+        import cifar10
+    else:
+        cmd_folder = os.path.realpath(os.path.abspath(os.path.expanduser("~/git/stored_docs/python/bldawn/nn/")))
+        if cmd_folder not in sys.path:
+            sys.path.insert(0, cmd_folder)
+        import bldawn_ala_cifar as cifar10
+
 
     # instantiate network
     print("Instantiating network...")
