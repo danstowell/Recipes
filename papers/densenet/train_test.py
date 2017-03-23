@@ -102,17 +102,6 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
         import bldawn_ala_cifar as cifar10
 
 
-    # instantiate network
-    print("Instantiating network...")
-    input_var = T.tensor4('inputs')
-    target_var = T.ivector('targets')
-    network = densenet.build_densenet(input_var=input_var, depth=depth,
-                                      growth_rate=growth_rate, dropout=dropout)
-    print("%d layers with weights, %d parameters" %
-          (sum(hasattr(l, 'W')
-               for l in lasagne.layers.get_all_layers(network)),
-           lasagne.layers.count_params(network, trainable=True)))
-
     # load dataset
     print("Loading dataset...")
     X_train, y_train, X_test, y_test = cifar10.load_dataset(
@@ -122,6 +111,17 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
     elif validate:
         X_val, y_val = X_train[-5000:], y_train[-5000:]
         X_train, y_train = X_train[:-5000], y_train[:-5000]
+
+# instantiate network
+    print("Instantiating network...")
+    input_var = T.tensor4('inputs')
+    target_var = T.ivector('targets')
+    network = densenet.build_densenet(input_shape=cifar10.get_input_shape(batchsize), input_var=input_var, depth=depth,
+                                      growth_rate=growth_rate, dropout=dropout)
+    print("%d layers with weights, %d parameters" %
+          (sum(hasattr(l, 'W')
+               for l in lasagne.layers.get_all_layers(network)),
+           lasagne.layers.count_params(network, trainable=True)))
 
     # define training function
     print("Compiling training function...")
