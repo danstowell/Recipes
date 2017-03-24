@@ -13,8 +13,8 @@ import numpy as np
 
 
 def get_input_shape(batchsize):
-    #return (batchsize, 3, 32, 32)
-    return (None, 3, None, None)  # being ignorant seems to prevent OOM errors, presumably because some pre-optimisation cleverness is skipped
+    return (batchsize, 3, 32, 32)
+    #return (None, 3, None, None)  # being ignorant
 
 def download_dataset(path, source='https://www.cs.toronto.edu/~kriz/'
                                   'cifar-10-python.tar.gz'):
