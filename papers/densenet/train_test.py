@@ -83,7 +83,7 @@ def generate_in_background(generator, num_cached=10):
 
 
 def train_test(depth, growth_rate, dropout, augment, validate, epochs,
-               eta, save_weights, save_errors, batchsize=16):
+               eta, save_weights, save_errors, batchsize=64): # TODO 16
     # import (deferred until now to make --help faster)
     import numpy as np
     import theano
@@ -93,7 +93,7 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
     import densenet_fast as densenet  # or "import densenet" for slower version
     import progress
 
-    if False:
+    if True:
         import cifar10
     else:
         cmd_folder = os.path.realpath(os.path.abspath(os.path.expanduser("~/git/stored_docs/python/bldawn/nn/")))
