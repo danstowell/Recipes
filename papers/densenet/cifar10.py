@@ -12,6 +12,9 @@ import sys
 import numpy as np
 
 
+def get_input_shape(batchsize):
+    return (batchsize, 3, 32, 32)
+
 def download_dataset(path, source='https://www.cs.toronto.edu/~kriz/'
                                   'cifar-10-python.tar.gz'):
     """
