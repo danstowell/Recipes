@@ -112,7 +112,7 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
         X_val, y_val = X_train[-5000:], y_train[-5000:]
         X_train, y_train = X_train[:-5000], y_train[:-5000]
 
-# instantiate network
+    # instantiate network
     print("Instantiating network...")
     input_var = T.tensor4('inputs')
     target_var = T.ivector('targets')
