@@ -20,7 +20,7 @@ import lasagne
 from lasagne.layers import (InputLayer, Conv2DLayer, ConcatLayer, DenseLayer,
                             DropoutLayer, Pool2DLayer, GlobalPoolLayer,
                             NonlinearityLayer, ScaleLayer, BiasLayer)
-from lasagne.nonlinearities import rectify, softmax
+from lasagne.nonlinearities import rectify, softmax #, elu
 try:
     from lasagne.layers.dnn import BatchNormDNNLayer as BatchNormLayer
 except ImportError:
@@ -37,11 +37,14 @@ def signmat(x):
 def shrinkage(x):
     return basinabs(x) * signmat(x)
 
+def elu(x):
+    return T.switch(x > 0, x, T.expm1(x))
+
 ournonlin = rectify
 #ournonlin = abs
 #ournonlin = basinabs
 #ournonlin = shrinkage
-
+#ournonlin = elu
 
 
 def build_densenet(input_shape=(None, 3, None, None), input_var=None, classes=10,
