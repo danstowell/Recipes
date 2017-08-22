@@ -46,6 +46,7 @@ ournonlin = rectify
 #ournonlin = shrinkage
 #ournonlin = elu
 
+from layers_custom import Conv2DLayerNonNeg
 
 def build_densenet(input_shape=(None, 3, None, None), input_var=None, classes=10,
                    depth=40, first_output=16, growth_rate=12, num_blocks=3,
@@ -153,10 +154,18 @@ def affine_relu_conv(network, channels, filter_size, dropout, name_prefix):
     network = BiasLayer(network, name=name_prefix + '_shift')
     network = NonlinearityLayer(network, nonlinearity=ournonlin,
                                 name=name_prefix + '_relu')
-    network = Conv2DLayer(network, channels, filter_size, pad='same',
+    if True:
+        # standard conv
+        network = Conv2DLayer(network, channels, filter_size, pad='same',
                           W=lasagne.init.HeNormal(gain='relu'),
                           b=None, nonlinearity=None,
                           name=name_prefix + '_conv')
+    else: # conv with non-negative coefficients baked in
+        network = Conv2DLayerNonNeg(network, channels, filter_size, pad='same',
+                          W=lasagne.init.HeNormal(gain='relu'),
+                          b=None, nonlinearity=None,
+                          name=name_prefix + '_conv',
+                          nonlinearityW=abs)
     if dropout:
         network = DropoutLayer(network, dropout)
     return network
