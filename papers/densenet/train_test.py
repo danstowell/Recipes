@@ -12,6 +12,7 @@ Author: Jan Schlüter
 import os, sys
 from argparse import ArgumentParser
 
+from layers_custom import Conv2DLayerPlus
 
 def opts_parser():
     usage = "Trains and tests a DenseNet on CIFAR-10."
@@ -52,6 +53,9 @@ def opts_parser():
     parser.add_argument(
             '--save-errors', type=str, default=None, metavar='FILE',
             help='If given, save train/validation errors to given .npz file')
+    parser.add_argument(
+            '--nonnegproject', type=str, default=None,
+            help='If given, hard-project convolutional layer params during training using "abs" or "relu"')
     return parser
 
 
@@ -83,7 +87,7 @@ def generate_in_background(generator, num_cached=10):
 
 
 def train_test(depth, growth_rate, dropout, augment, validate, epochs,
-               eta, save_weights, save_errors, batchsize=64): # TODO 16
+               eta, save_weights, save_errors, batchsize=64, nonnegproject=None): # TODO 16
     # import (deferred until now to make --help faster)
     import numpy as np
     import theano
@@ -122,6 +126,10 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
           (sum(hasattr(l, 'W')
                for l in lasagne.layers.get_all_layers(network)),
            lasagne.layers.count_params(network, trainable=True)))
+
+    # collect the conv layers so we can hardproject if needed
+    convlayers = [l for l in lasagne.layers.get_all_layers(network) if isinstance(l, Conv2DLayerPlus)]
+    print("  Collected %i Conv2DLayerPlus layers" % len(convlayers))
 
     # define training function
     print("Compiling training function...")
@@ -175,6 +183,11 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
                 total=train_batches)
         for inputs, targets in batches:
             train_loss += train_fn(inputs, targets)
+            if nonnegproject is None:
+                 pass # no-op
+            else:
+                 for l in convlayers:
+                     l.hardproject_filters(nonnegproject)
 
         # And possibly a full pass over the validation data:
         if validate:

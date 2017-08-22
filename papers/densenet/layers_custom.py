@@ -64,6 +64,8 @@ class Conv2DLayerPlus(lasagne.layers.Conv2DLayer):
 				self.__hardproject_filters_functions['abs'] = self.define_hardproject_abs_function()
 			elif projmethod=='relu':
 				self.__hardproject_filters_functions['relu'] = self.define_hardproject_relu_function()
+			else:
+				raise ValueError("Unknown hard-projection name: '%s'" % projmethod)
 		return self.__hardproject_filters_functions[projmethod]()
 
 	def define_hardproject_abs_function(self):
