@@ -56,6 +56,9 @@ def opts_parser():
     parser.add_argument(
             '--nonnegproject', type=str, default=None,
             help='If given, hard-project convolutional layer params during training using "abs" or "relu"')
+    parser.add_argument(
+            '--nonnegconvlayer', type=str, default=None,
+            help='If given, use special convolutional layers with nonneg-constrained params ("abs" or "relu")')
     return parser
 
 
@@ -87,7 +90,7 @@ def generate_in_background(generator, num_cached=10):
 
 
 def train_test(depth, growth_rate, dropout, augment, validate, epochs,
-               eta, save_weights, save_errors, batchsize=64, nonnegproject=None): # TODO 16
+               eta, save_weights, save_errors, batchsize=64, nonnegproject=None, nonnegconvlayer=None):
     # import (deferred until now to make --help faster)
     import numpy as np
     import theano
@@ -121,7 +124,7 @@ def train_test(depth, growth_rate, dropout, augment, validate, epochs,
     input_var = T.tensor4('inputs')
     target_var = T.ivector('targets')
     network = densenet.build_densenet(input_shape=cifar10.get_input_shape(batchsize), input_var=input_var, depth=depth,
-                                      growth_rate=growth_rate, dropout=dropout)
+                                      growth_rate=growth_rate, dropout=dropout, nonnegconvlayer=nonnegconvlayer)
     print("%d layers with weights, %d parameters" %
           (sum(hasattr(l, 'W')
                for l in lasagne.layers.get_all_layers(network)),

@@ -50,7 +50,7 @@ from layers_custom import Conv2DLayerPlus, Conv2DLayerNonNeg
 
 def build_densenet(input_shape=(None, 3, None, None), input_var=None, classes=10,
                    depth=40, first_output=16, growth_rate=12, num_blocks=3,
-                   dropout=0):
+                   dropout=0, nonnegconvlayer=None):
     """
     Creates a DenseNet model in Lasagne.
 
@@ -109,10 +109,10 @@ def build_densenet(input_shape=(None, 3, None, None), input_var=None, classes=10
     n = (depth - 1) // num_blocks
     for b in range(num_blocks):
         network = dense_block(network, n - 1, growth_rate, dropout,
-                              name_prefix='block%d' % (b + 1))
+                              name_prefix='block%d' % (b + 1), nonnegconvlayer=nonnegconvlayer)
         if b < num_blocks - 1:
             network = transition(network, dropout,
-                                 name_prefix='block%d_trs' % (b + 1))
+                                 name_prefix='block%d_trs' % (b + 1), nonnegconvlayer=nonnegconvlayer)
     # post processing until prediction
     network = ScaleLayer(network, name='post_scale')
     network = BiasLayer(network, name='post_shift')
@@ -124,12 +124,12 @@ def build_densenet(input_shape=(None, 3, None, None), input_var=None, classes=10
     return network
 
 
-def dense_block(network, num_layers, growth_rate, dropout, name_prefix):
+def dense_block(network, num_layers, growth_rate, dropout, name_prefix, nonnegconvlayer):
     # concatenated 3x3 convolutions
     for n in range(num_layers):
         conv = affine_relu_conv(network, channels=growth_rate,
                                 filter_size=3, dropout=dropout,
-                                name_prefix=name_prefix + '_l%02d' % (n + 1))
+                                name_prefix=name_prefix + '_l%02d' % (n + 1), nonnegconvlayer=nonnegconvlayer)
         conv = BatchNormLayer(conv, name=name_prefix + '_l%02dbn' % (n + 1),
                               beta=None, gamma=None)
         network = ConcatLayer([network, conv], axis=1,
@@ -137,11 +137,11 @@ def dense_block(network, num_layers, growth_rate, dropout, name_prefix):
     return network
 
 
-def transition(network, dropout, name_prefix):
+def transition(network, dropout, name_prefix, nonnegconvlayer):
     # a transition 1x1 convolution followed by avg-pooling
     network = affine_relu_conv(network, channels=network.output_shape[1],
                                filter_size=1, dropout=dropout,
-                               name_prefix=name_prefix)
+                               name_prefix=name_prefix, nonnegconvlayer=nonnegconvlayer)
     network = Pool2DLayer(network, 2, mode='average_inc_pad',
                           name=name_prefix + '_pool')
     network = BatchNormLayer(network, name=name_prefix + '_bn',
@@ -149,23 +149,29 @@ def transition(network, dropout, name_prefix):
     return network
 
 
-def affine_relu_conv(network, channels, filter_size, dropout, name_prefix):
+def affine_relu_conv(network, channels, filter_size, dropout, name_prefix, nonnegconvlayer):
     network = ScaleLayer(network, name=name_prefix + '_scale')
     network = BiasLayer(network, name=name_prefix + '_shift')
     network = NonlinearityLayer(network, nonlinearity=ournonlin,
                                 name=name_prefix + '_relu')
-    if True:
+    if nonnegconvlayer is None:
         # standard conv, but we're using the "plus" version to allow for hard-projecting
         network = Conv2DLayerPlus(network, channels, filter_size, pad='same',
                           W=lasagne.init.HeNormal(gain='relu'),
                           b=None, nonlinearity=None,
                           name=name_prefix + '_conv')
     else: # conv with non-negative coefficients baked in
+	if nonnegconvlayer=='abs':
+		nonlinearityW=abs
+	elif nonnegconvlayer=='relu':
+		nonlinearityW=rectify
+	else:
+		raise ValueError("Unknown nonlinearity: '%s'" % nonnegconvlayer)
         network = Conv2DLayerNonNeg(network, channels, filter_size, pad='same',
                           W=lasagne.init.HeNormal(gain='relu'),
                           b=None, nonlinearity=None,
                           name=name_prefix + '_conv',
-                          nonlinearityW=abs)
+                          nonlinearityW=nonlinearityW)
     if dropout:
         network = DropoutLayer(network, dropout)
     return network
